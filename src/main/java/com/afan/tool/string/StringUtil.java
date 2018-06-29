@@ -33,6 +33,7 @@ public class StringUtil {
 		System.out.println(mixMobile("15968185312"));
 		System.out.println(mixEmail("ccc@qq.com"));
 		System.out.println(mixEmail("215853693@qq.cn"));
+		System.out.println(unicodeEncode("陈家辉2010"));
 	}
 
 	public static int getInt(String s) {
@@ -150,7 +151,7 @@ public class StringUtil {
 
 	// 陈家辉2010==>\u9648\u5bb6\u8f892010
 	public static String unicodeEncode(String chinaStr) {
-		return unicodeEncode("\\u");
+		return unicodeEncode(chinaStr, "\\u");
 	}
 
 	public static String unicodeEncode(String chinaStr, String s) {

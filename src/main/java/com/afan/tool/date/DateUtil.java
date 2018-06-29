@@ -423,6 +423,14 @@ public class DateUtil {
 		return c.getTime();
 	}
 	
+	public static int getTimestamp() {
+		return (int)(System.currentTimeMillis()/1000);
+	}
+	
+	public static long getTimestampMill() {
+		return System.currentTimeMillis();
+	}
+	
 	public static void main(String[] args) {
 		System.out.println(getDateStr(getDate(2016, 12, 1, 14, 30, 0,0)));
 		System.out.println(getWeek(getDate(2016, 12, 1, 0, 0, 0,0)));

@@ -32,7 +32,6 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
@@ -52,6 +51,11 @@ public class WebUtil {
     static final int requestTimeOut = 10 * 1000;
     static final int connectTimeOut = 10 * 1000;
     static final int readTimeOut = 10 * 1000;
+    
+    static final String HTTP = "http";
+    static final String HTTPS = "https";
+    static final String CONTENT_TYPE = "Content-Type";
+    
     private static CloseableHttpClient httpClient = null;
     private final static Object syncLock = new Object();
     private static void config(HttpRequestBase httpRequestBase) {
@@ -78,6 +82,16 @@ public class WebUtil {
      * @return
      */
     public static CloseableHttpClient getHttpClient(String url) {
+    	return getHttpClient(url, null);
+    }
+    
+    /**
+     * 获取HttpClient,带ssl证书
+     * @param url
+     * @param sslFactory
+     * @return
+     */
+    public static CloseableHttpClient getHttpClient(String url, SSLConnectionSocketFactory sslFactory) {
         String hostname = url.split("/")[2];
         int port = 80;
         if (hostname.contains(":")) {
@@ -88,7 +102,7 @@ public class WebUtil {
         if (httpClient == null) {
             synchronized (syncLock) {
                 if (httpClient == null) {
-                    httpClient = createHttpClient(20, 5, 10, hostname, port);
+                    httpClient = createHttpClient(20, 5, 10, hostname, port, sslFactory);
                 }
             }
         }
@@ -102,12 +116,16 @@ public class WebUtil {
      * @param maxRoute
      * @param hostname
      * @param port
+     * @param sslFactory
      * @return
      */
-    public static CloseableHttpClient createHttpClient(int maxTotal, int maxPerRoute, int maxRoute, String hostname, int port) {
+    public static CloseableHttpClient createHttpClient(int maxTotal, int maxPerRoute, int maxRoute, String hostname, int port, SSLConnectionSocketFactory sslFactory) {
         ConnectionSocketFactory plainsf = PlainConnectionSocketFactory.getSocketFactory();
-        LayeredConnectionSocketFactory sslsf = SSLConnectionSocketFactory.getSocketFactory();
-        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create().register("http", plainsf).register("https", sslsf).build();
+        //LayeredConnectionSocketFactory sslsf = SSLConnectionSocketFactory.getSocketFactory();
+		if (sslFactory == null) {
+			sslFactory = SSLConnectionSocketFactory.getSocketFactory();
+		}
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create().register(HTTP, plainsf).register(HTTPS, sslFactory).build();
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
         // 将最大连接数增加
         cm.setMaxTotal(maxTotal);
@@ -169,35 +187,36 @@ public class WebUtil {
         }
     }
 
+    public static String post(String url, Map<String, Object> params, String charset) throws IOException {
+    	return post(url, params, charset, null);
+    }
+    
     /**
      * POST请求
      * @param url
      * @param params
      * @param charset
+     * @param factory
      * @return
      * @throws IOException
      */
-    public static String post(String url, Map<String, Object> params, String charset) throws IOException {
+    public static String post(String url, Map<String, Object> params, String charset, SSLConnectionFactory factory) throws IOException {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost);
         setPostParams(httpPost, params, charset);
-        CloseableHttpResponse response = null;
-        try {
-            response = getHttpClient(url).execute(httpPost, HttpClientContext.create());
-            HttpEntity entity = response.getEntity();
-            String result = EntityUtils.toString(entity, charset);
-            EntityUtils.consume(entity);
-            return result;
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            try {
-                if (response != null)
-                    response.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        CloseableHttpClient client = factory == null ? getHttpClient(url) : getHttpClient(url, factory.getSSLConnectionSocketFactory());
+		try (CloseableHttpResponse response = client.execute(httpPost, HttpClientContext.create())) {
+			HttpEntity entity = response.getEntity();
+			String result = EntityUtils.toString(entity, charset);
+			EntityUtils.consume(entity);
+			return result;
+		} catch (IOException e) {
+			throw e;
+		}
+    }
+    
+    public static String post(String url, String data, String contentType, String charset) throws IOException {
+    	return post(url, data, contentType, charset, null);
     }
     
     /**
@@ -206,25 +225,29 @@ public class WebUtil {
      * @param data
      * @param contentType
      * @param charset
+     * @param factory
      * @return
      * @throws IOException
      */
-    public static String post(String url, String data, String contentType, String charset) throws IOException {
+    public static String post(String url, String data, String contentType, String charset, SSLConnectionFactory factory) throws IOException {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost);
         StringEntity myEntity = new StringEntity(data, charset);
-        httpPost.addHeader("Content-Type", contentType);
+        httpPost.addHeader(CONTENT_TYPE, contentType);
         httpPost.setEntity(myEntity);
-        HttpResponse response = getHttpClient(url).execute(httpPost, HttpClientContext.create());
-        HttpEntity resEntity = response.getEntity();
-        InputStreamReader reader = new InputStreamReader(resEntity.getContent(), charset);
-        char[] buff = new char[1024];
-        int length = 0;
-        StringBuilder result = new StringBuilder();
-        while ((length = reader.read(buff)) != -1) {
-        	result.append(new String(buff, 0, length));
-        }
-        return result.toString();
+        CloseableHttpClient client = factory == null ? getHttpClient(url) : getHttpClient(url, factory.getSSLConnectionSocketFactory());
+        try (CloseableHttpResponse response = client.execute(httpPost, HttpClientContext.create());
+        		InputStreamReader reader = new InputStreamReader(response.getEntity().getContent(), charset)) {
+            char[] buff = new char[1024];
+            int length = 0;
+            StringBuilder result = new StringBuilder();
+            while ((length = reader.read(buff)) != -1) {
+            	result.append(new String(buff, 0, length));
+            }
+            return result.toString();
+        } catch (IOException e) {
+			throw e;
+		}
     }
 
     /**
@@ -233,27 +256,17 @@ public class WebUtil {
      * @param charset
      * @return
      */
-    public static String get(String url, String charset) {
+    public static String get(String url, String charset) throws IOException {
         HttpGet httpGet = new HttpGet(url);
         config(httpGet);
-        CloseableHttpResponse response = null;
-        try {
-            response = getHttpClient(url).execute(httpGet, HttpClientContext.create());
+        try (CloseableHttpResponse response = getHttpClient(url).execute(httpGet, HttpClientContext.create())) {
             HttpEntity entity = response.getEntity();
             String result = EntityUtils.toString(entity, charset);
             EntityUtils.consume(entity);
             return result;
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (response != null)
-                    response.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        	throw e;
         }
-        return null;
     }
 
     public static void main(String[] args) {
@@ -336,7 +349,9 @@ public class WebUtil {
         public void run() {
             try {
                 System.out.println(WebUtil.get(url,"utf-8"));
-            } finally {
+            } catch (Exception e) {
+            	e.printStackTrace();
+			} finally {
                 countDownLatch.countDown();
             }
         }
