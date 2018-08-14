@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpRequestRetryHandler;
@@ -270,13 +273,13 @@ public class WebUtil {
     }
 
     public static void main(String[] args) {
-    	String data = "<xml><appid><![CDATA[wxc9063e3a56b05d76]]></appid>"+"\n"+"<bank_type><![CDATA[CFT]]></bank_type>"+"\n"+"<cash_fee><![CDATA[1]]></cash_fee>"+"\n"+"<fee_type><![CDATA[CNY]]></fee_type>"+"\n"+"<is_subscribe><![CDATA[N]]></is_subscribe>"+"\n"+"<mch_id><![CDATA[1487722302]]></mch_id>"+"\n"+"<nonce_str><![CDATA[f2cdd13c54c54eb5a7174ec7e3b271cc]]></nonce_str>"+"\n"+"<openid><![CDATA[oy10b0ekbCLlcM5wTgsHoqvxfBtU]]></openid>"+"\n"+"<out_trade_no><![CDATA[150536043500686]]></out_trade_no>"+"\n"+"<result_code><![CDATA[SUCCESS]]></result_code>"+"\n"+"<return_code><![CDATA[SUCCESS]]></return_code>"+"\n"+"<sign><![CDATA[BC41B87449FF023A650E49D58E9DF749]]></sign>"+"\n"+"<time_end><![CDATA[20171107195412]]></time_end>"+"\n"+"<total_fee>1</total_fee>"+"\n"+"<trade_type><![CDATA[MWEB]]></trade_type>"+"\n"+"<transaction_id><![CDATA[4200000006201711073117052294]]></transaction_id>"+"\n"+"</xml>";
-		try {
-			String re = post("https://fhdowx.xyy001.com/pay/h5Notify.do", data, "text/html", "UTF-8");
-			System.out.println(re);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//    	String data = "<xml><appid><![CDATA[wxc9063e3a56b05d76]]></appid>"+"\n"+"<bank_type><![CDATA[CFT]]></bank_type>"+"\n"+"<cash_fee><![CDATA[1]]></cash_fee>"+"\n"+"<fee_type><![CDATA[CNY]]></fee_type>"+"\n"+"<is_subscribe><![CDATA[N]]></is_subscribe>"+"\n"+"<mch_id><![CDATA[1487722302]]></mch_id>"+"\n"+"<nonce_str><![CDATA[f2cdd13c54c54eb5a7174ec7e3b271cc]]></nonce_str>"+"\n"+"<openid><![CDATA[oy10b0ekbCLlcM5wTgsHoqvxfBtU]]></openid>"+"\n"+"<out_trade_no><![CDATA[150536043500686]]></out_trade_no>"+"\n"+"<result_code><![CDATA[SUCCESS]]></result_code>"+"\n"+"<return_code><![CDATA[SUCCESS]]></return_code>"+"\n"+"<sign><![CDATA[BC41B87449FF023A650E49D58E9DF749]]></sign>"+"\n"+"<time_end><![CDATA[20171107195412]]></time_end>"+"\n"+"<total_fee>1</total_fee>"+"\n"+"<trade_type><![CDATA[MWEB]]></trade_type>"+"\n"+"<transaction_id><![CDATA[4200000006201711073117052294]]></transaction_id>"+"\n"+"</xml>";
+//		try {
+//			String re = post("https://fhdowx.xyy001.com/pay/h5Notify.do", data, "text/html", "UTF-8");
+//			System.out.println(re);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		
         /*
         String[] urisToGet = {
@@ -334,6 +337,27 @@ public class WebUtil {
         long end = System.currentTimeMillis();
         System.out.println("consume -> " + (end - start));
         */
+    	
+    	long start = System.currentTimeMillis();
+    	int pagecount = 100000;
+    	String url = "http://192.168.81.129/";
+    	 ExecutorService executors = Executors.newFixedThreadPool(100);
+         CountDownLatch countDownLatch = new CountDownLatch(100);
+         
+         for (int i = 0; i < pagecount; i++) {
+             HttpGet httpget = new HttpGet(url);
+             config(httpget);
+             // 启动线程抓取
+             executors.execute(new GetRunnable(url, countDownLatch));
+         }
+         try {
+			countDownLatch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+         executors.shutdown();
+         long end = System.currentTimeMillis();
+         System.out.println("consume -> " + (end - start));
     }
 
     static class GetRunnable implements Runnable {
