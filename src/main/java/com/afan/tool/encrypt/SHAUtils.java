@@ -10,6 +10,9 @@ import java.security.NoSuchAlgorithmException;
  * 
  */
 public class SHAUtils {
+	
+	public static final String SHA_256 = "SHA-256";
+	public static final String SHA_512 = "SHA-512";
 
 	/**
 	 * 传入文本内容，返回 SHA-256 串
@@ -18,7 +21,7 @@ public class SHAUtils {
 	 * @return
 	 */
 	public static String sha256(final String strText) {
-		return sha(strText, "SHA-256");
+		return sha(strText, SHA_256);
 	}
 
 	/**
@@ -28,7 +31,7 @@ public class SHAUtils {
 	 * @return
 	 */
 	public static String sha512(final String strText) {
-		return sha(strText, "SHA-512");
+		return sha(strText, SHA_512);
 	}
 
 	/**

@@ -1,165 +1,104 @@
 package com.afan.tool.encrypt;
 
-import java.security.Key;
-import java.security.Security;
-
+import java.security.SecureRandom;
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+
+import com.afan.tool.string.StringUtil;
 
 /**
  * 对称加密
+ * 
  * @author afan
- *
+ * 
  */
 public class DESUtils {
-
-	/** 字符串默认键值 */
-	private static String strDefaultKey = "019a5b3538f0d1dea53737e6d32de5ab";
-
-	/** 加密工具 */
-	private Cipher encryptCipher = null;
-
-	/** 解密工具 */
-	private Cipher decryptCipher = null;
-
-	/**
-	 * 将byte数组转换为表示16进制值的字符串
-	 * @param arrB
-	 * @return
-	 * @throws Exception
-	 */
-	private static String byteArr2HexStr(byte[] arrB) throws Exception {
-		int iLen = arrB.length;
-		// 每个byte用两个字符才能表示，所以字符串的长度是数组长度的两倍
-		StringBuffer sb = new StringBuffer(iLen * 2);
-		for (int i = 0; i < iLen; i++) {
-			int intTmp = arrB[i];
-			// 把负数转换为正数
-			while (intTmp < 0) {
-				intTmp = intTmp + 256;
-			}
-			// 小于0F的数需要在前面补0
-			if (intTmp < 16) {
-				sb.append("0");
-			}
-			sb.append(Integer.toString(intTmp, 16));
+	
+	private static final String DES = "DES";
+	private static String CHARTSET = "utf-8";
+	private static final String DEFAULT_KEY = "023rEAiL15RgD51HOMkL1aBpiL1rEAi5";
+	
+	public static String encrypt(String content) {
+		if (!StringUtil.isBlank(content)) {
+			return encrypt(content, DEFAULT_KEY);
 		}
-		return sb.toString();
+		return null;
 	}
 
-	/**
-	 * 将表示16进制值的字符串转换为byte数组
-	 * @param strIn
-	 * @return
-	 * @throws Exception
-	 */
-	private static byte[] hexStr2ByteArr(String strIn) throws Exception {
-		byte[] arrB = strIn.getBytes();
-		int iLen = arrB.length;
-
-		// 两个字符表示一个字节，所以字节数组长度是字符串长度除以2
-		byte[] arrOut = new byte[iLen / 2];
-		for (int i = 0; i < iLen; i = i + 2) {
-			String strTmp = new String(arrB, i, 2);
-			arrOut[i / 2] = (byte) Integer.parseInt(strTmp, 16);
+	public static String decrypt(String content) {
+		if (!StringUtil.isBlank(content)) {
+			return decrypt(content, DEFAULT_KEY);
 		}
-		return arrOut;
+		return null;
 	}
 
 	/**
-	 * 默认构造方法，使用默认密钥
-	 * 
-	 * @throws Exception
-	 */
-	public DESUtils() throws Exception {
-		this(strDefaultKey);
-	}
-
-	/**
-	 * 指定密钥构造方法
-	 * 
-	 * @param strKey
-	 *            指定的密钥
-	 * @throws Exception
-	 */
-	public DESUtils(String strKey) throws Exception {
-		Security.addProvider(new com.sun.crypto.provider.SunJCE());
-		Key key = getKey(strKey.getBytes());
-
-		encryptCipher = Cipher.getInstance("DES");
-		encryptCipher.init(Cipher.ENCRYPT_MODE, key);
-
-		decryptCipher = Cipher.getInstance("DES");
-		decryptCipher.init(Cipher.DECRYPT_MODE, key);
-	}
-
-	/**
-	 * 加密字节数组
-	 * @param byteArr
+	 * 加密
+	 * @param content
+	 * @param secretKey
 	 * @return
-	 * @throws Exception
 	 */
-	public byte[] encrypt(byte[] byteArr) throws Exception {
-		return encryptCipher.doFinal(byteArr);
-	}
-
-	/**
-	 * 加密字符串
-	 * @param str
-	 * @return
-	 * @throws Exception
-	 */
-	public String encrypt(String str) throws Exception {
-		return byteArr2HexStr(encrypt(str.getBytes()));
-	}
-
-	/**
-	 * 解密字节数组
-	 * @param byteArr
-	 * @return
-	 * @throws Exception
-	 */
-	public byte[] decrypt(byte[] byteArr) throws Exception {
-		return decryptCipher.doFinal(byteArr);
-	}
-
-	/**
-	 * 解密字符串
-	 * @param strIn
-	 * @return
-	 * @throws Exception
-	 */
-	public String decrypt(String str) throws Exception {
-		return new String(decrypt(hexStr2ByteArr(str)));
-	}
-
-	/**
-	 * 从指定字符串生成密钥，密钥所需的字节数组长度为8位 不足8位时后面补0，超出8位只取前8位
-	 * @param byteArr
-	 * @return
-	 * @throws Exception
-	 */
-	private Key getKey(byte[] byteArr) throws Exception {
-		// 创建一个空的8位字节数组（默认值为0）
-		byte[] array = new byte[8];
-		// 将原始字节数组转换为8位
-		for (int i = 0; i < byteArr.length && i < array.length; i++) {
-			array[i] = byteArr[i];
+	public static String encrypt(String content, String secretKey) {
+		try {
+			SecureRandom random = new SecureRandom();
+			DESKeySpec desKey = new DESKeySpec(secretKey.getBytes());
+			// 创建一个密匙工厂，然后用它把DESKeySpec转换成
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(DES);
+			SecretKey securekey = keyFactory.generateSecret(desKey);
+			// Cipher对象实际完成加密操作
+			Cipher cipher = Cipher.getInstance(DES);
+			// 用密匙初始化Cipher对象
+			cipher.init(Cipher.ENCRYPT_MODE, securekey, random);
+			// 现在，获取数据并加密
+			// 正式执行加密操作
+			byte[] encrypt = cipher.doFinal(content.getBytes(CHARTSET));
+			return ByteUtils.byteArray2Base64(encrypt);
+		} catch (Throwable e) {
+			e.printStackTrace();
 		}
-		// 生成密钥
-		Key key = new javax.crypto.spec.SecretKeySpec(array, "DES");
-		return key;
+		return null;
+	}
+
+	/**
+	 * 解密
+	 * @param content
+	 * @param secretKey
+	 * @return
+	 * @throws Exception
+	 */
+	public static String decrypt(String content, String secretKey) {
+		try {
+			// DES算法要求有一个可信任的随机数源
+			SecureRandom random = new SecureRandom();
+			// 创建一个DESKeySpec对象
+			DESKeySpec desKey = new DESKeySpec(secretKey.getBytes());
+			// 创建一个密匙工厂
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(DES);
+			// 将DESKeySpec对象转换成SecretKey对象
+			SecretKey securekey = keyFactory.generateSecret(desKey);
+			// Cipher对象实际完成解密操作
+			Cipher cipher = Cipher.getInstance(DES);
+			// 用密匙初始化Cipher对象
+			cipher.init(Cipher.DECRYPT_MODE, securekey, random);
+			// 真正开始解密操作
+			byte[] decrypt = cipher.doFinal(ByteUtils.base642byteArray(content));
+			return new String(decrypt, CHARTSET);
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public static void main(String[] args) {
-		try {
-			String test = "15968185312";
-			DESUtils des = new DESUtils("slkdd");// 自定义密钥
-			System.out.println("加密前的字符：" + test);
-			System.out.println("加密后的字符：" + des.encrypt(test));
-			System.out.println("解密后的字符：" + des.decrypt(des.encrypt(test)));
-			System.out.println("解密后的字符：" + des.decrypt("87078bdee9b5d510f63cce896853fa95"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		String encodeRules = "023rEAiL15RgD51HOMkL1aBpiL1rEAi5";
+		String content = "159ALSS5312";
+		String encrypt = encrypt(content, encodeRules);
+		String decrypt = decrypt(encrypt, encodeRules);
+		System.out.println("根据输入的规则" + encodeRules + "加密后的密文是:" + encrypt);
+		System.out.println("使用DES对称解密，请输入加密的规则：(须与加密相同)");
+		System.out.println("请输入要解密的内容（密文）:" + encrypt);
+		System.out.println("根据输入的规则" + encodeRules + "解密后的明文是:" + decrypt);
 	}
 }

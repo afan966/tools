@@ -1,11 +1,11 @@
 package com.afan.tool.encrypt;
 
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import com.afan.tool.string.StringUtil;
 
 /**
  * AES高级加密标准
@@ -15,112 +15,106 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class AESUtils {
 
-	private static final String KEY_ALGORITHM = "AES";
-	private static final String DEFAULT_CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";// 默认的加密算法
+	private static final String AES = "AES";
+	private static String CHARTSET = "utf-8";
+	private static final String DEFAULT_KEY = "afan966";
 
-	public static byte[] initSecretKey() {
-		// 返回生成指定算法密钥生成器的 KeyGenerator 对象
-		KeyGenerator kg = null;
+	public static String encrypt(String content) {
+		if (!StringUtil.isBlank(content)) {
+			return encrypt(content, DEFAULT_KEY);
+		}
+		return null;
+	}
+
+	public static String decrypt(String content) {
+		if (!StringUtil.isBlank(content)) {
+			return decrypt(content, DEFAULT_KEY);
+		}
+		return null;
+	}
+
+	/**
+	 * 加密
+	 * 
+	 * @param content
+	 * @param secretKey
+	 * @return
+	 */
+	public static String encrypt(String content, String secretKey) {
 		try {
-			kg = KeyGenerator.getInstance(KEY_ALGORITHM);
-		} catch (NoSuchAlgorithmException e) {
+			// 1.构造密钥生成器，指定为AES算法,不区分大小写
+			KeyGenerator keygen = KeyGenerator.getInstance(AES);
+			// 2.根据ecnodeRules规则初始化密钥生成器
+			// 生成一个128位的随机源,根据传入的字节数组
+			keygen.init(128, new SecureRandom(secretKey.getBytes()));
+			// 3.产生原始对称密钥
+			SecretKey original_key = keygen.generateKey();
+			// 4.获得原始对称密钥的字节数组
+			byte[] raw = original_key.getEncoded();
+			// 5.根据字节数组生成AES密钥
+			SecretKey key = new SecretKeySpec(raw, AES);
+			// 6.根据指定算法AES自成密码器
+			Cipher cipher = Cipher.getInstance(AES);
+			// 7.初始化密码器，第一个参数为加密(Encrypt_mode)或者解密解密(Decrypt_mode)操作，第二个参数为使用的KEY
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+			// 8.获取加密内容的字节数组(这里要设置为utf-8)不然内容中如果有中文和英文混合中文就会解密为乱码
+			byte[] byte_encode = content.getBytes(CHARTSET);
+			// 9.根据密码器的初始化方式--加密：将数据加密
+			byte[] byte_AES = cipher.doFinal(byte_encode);
+			// 10.将加密后的数据转换为字符串
+			// return ByteUtils.byteArray2HexStr(byte_AES);
+			return ByteUtils.byteArray2Base64(byte_AES);
+		} catch (Exception e) {
 			e.printStackTrace();
-			return new byte[0];
 		}
-		// 初始化此密钥生成器，使其具有确定的密钥大小
-		// AES 要求密钥长度为 128
-		kg.init(128);
-		// 生成一个密钥
-		SecretKey secretKey = kg.generateKey();
-		return secretKey.getEncoded();
+		return null;
 	}
 
-	private static Key toKey(byte[] key) {
-		// 生成密钥
-		return new SecretKeySpec(key, KEY_ALGORITHM);
-	}
-
-	public static byte[] encrypt(byte[] data, Key key) throws Exception {
-		return encrypt(data, key, DEFAULT_CIPHER_ALGORITHM);
-	}
-
-	public static byte[] encrypt(byte[] data, byte[] key) throws Exception {
-		return encrypt(data, key, DEFAULT_CIPHER_ALGORITHM);
-	}
-
-	public static byte[] encrypt(byte[] data, byte[] key, String cipherAlgorithm) throws Exception {
-		// 还原密钥
-		Key k = toKey(key);
-		return encrypt(data, k, cipherAlgorithm);
-	}
-
-	public static byte[] encrypt(byte[] data, Key key, String cipherAlgorithm) throws Exception {
-		// 实例化
-		Cipher cipher = Cipher.getInstance(cipherAlgorithm);
-		// 使用密钥初始化，设置为加密模式
-		cipher.init(Cipher.ENCRYPT_MODE, key);
-		// 执行操作
-		return cipher.doFinal(data);
-	}
-
-	public static byte[] decrypt(byte[] data, byte[] key) throws Exception {
-		return decrypt(data, key, DEFAULT_CIPHER_ALGORITHM);
-	}
-
-	public static byte[] decrypt(byte[] data, Key key) throws Exception {
-		return decrypt(data, key, DEFAULT_CIPHER_ALGORITHM);
-	}
-
-	public static byte[] decrypt(byte[] data, byte[] key, String cipherAlgorithm) throws Exception {
-		// 还原密钥
-		Key k = toKey(key);
-		return decrypt(data, k, cipherAlgorithm);
-	}
-
-	public static byte[] decrypt(byte[] data, Key key, String cipherAlgorithm) throws Exception {
-		// 实例化
-		Cipher cipher = Cipher.getInstance(cipherAlgorithm);
-		// 使用密钥初始化，设置为解密模式
-		cipher.init(Cipher.DECRYPT_MODE, key);
-		// 执行操作
-		return cipher.doFinal(data);
-	}
-
-	private static String showByteArray(byte[] data) {
-		if (null == data) {
-			return null;
+	/**
+	 * 解密
+	 * 
+	 * @param content
+	 * @param secretKey
+	 * @return
+	 */
+	public static String decrypt(String content, String secretKey) {
+		try {
+			// 1.构造密钥生成器，指定为AES算法,不区分大小写
+			KeyGenerator keygen = KeyGenerator.getInstance(AES);
+			// 2.根据ecnodeRules规则初始化密钥生成器
+			// 生成一个128位的随机源,根据传入的字节数组
+			keygen.init(128, new SecureRandom(secretKey.getBytes()));
+			// 3.产生原始对称密钥
+			SecretKey original_key = keygen.generateKey();
+			// 4.获得原始对称密钥的字节数组
+			byte[] raw = original_key.getEncoded();
+			// 5.根据字节数组生成AES密钥
+			SecretKey key = new SecretKeySpec(raw, AES);
+			// 6.根据指定算法AES自成密码器
+			Cipher cipher = Cipher.getInstance(AES);
+			// 7.初始化密码器，第一个参数为加密(Encrypt_mode)或者解密(Decrypt_mode)操作，第二个参数为使用的KEY
+			cipher.init(Cipher.DECRYPT_MODE, key);
+			// 8.将加密并编码后的内容解码成字节数组
+			// byte [] byte_content= ByteUtils.hexStr2ByteArray(content);
+			byte[] byte_content = ByteUtils.base642byteArray(content);
+			// 解密
+			byte[] byte_decode = cipher.doFinal(byte_content);
+			return new String(byte_decode, CHARTSET);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		StringBuilder sb = new StringBuilder("{");
-		for (byte b : data) {
-			sb.append(b).append(",");
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		sb.append("}");
-		return sb.toString();
+		return null;
 	}
 
-	public static void main(String[] args) throws Exception {
-		byte[] key = initSecretKey();
-		key = "f3895318da5528a38201f8a396ce9170".substring(0,16).getBytes();
-		System.out.println("key：" + showByteArray(key));
-		Key k = toKey(key); // 生成秘钥
-		String data = "chenfan";
-		System.out.println("加密前数据: string:" + data);
-		System.out.println("加密前数据: byte[]:" + showByteArray(data.getBytes()));
-		System.out.println();
-		byte[] encryptData = encrypt(data.getBytes(), k);// 数据加密
-		System.out.println("加密后数据: byte[]:" + showByteArray(encryptData));
-		for (int i = 0; i < encryptData.length; i++) {
-			System.out.print((char) encryptData[i] + " ");
-		}
-		System.out.println();
-		// System.out.println("加密后数据: hexStr:"+Hex.encodeHexStr(encryptData));
-		System.out.println();
-		byte[] decryptData = decrypt(encryptData, k);// 数据解密
-		System.out.println("解密后数据: byte[]:" + showByteArray(decryptData));
-		System.out.println("解密后数据: string:" + new String(decryptData));
-		for (int i = 0; i < decryptData.length; i++) {
-			System.out.print((char) decryptData[i] + " ");
-		}
+	public static void main(String[] args) {
+		String encodeRules = "adfas";
+		String content = "159ALSS5312";
+		String encrypt = encrypt(content);
+		String decrypt = decrypt(encrypt);
+		System.out.println("根据输入的规则" + encodeRules + "加密后的密文是:" + encrypt);
+		System.out.println("使用AES对称解密，请输入加密的规则：(须与加密相同)");
+		System.out.println("请输入要解密的内容（密文）:" + encrypt);
+		System.out.println("根据输入的规则" + encodeRules + "解密后的明文是:" + decrypt);
 	}
+
 }
