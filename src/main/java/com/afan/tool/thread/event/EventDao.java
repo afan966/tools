@@ -32,6 +32,8 @@ public interface EventDao<T> {
 			return status;
 		}
 	}
+	
+	void add(T t) throws Exception;
 
 	void initStatus(Status statusSrc, Status statusDesc) throws Exception;
 

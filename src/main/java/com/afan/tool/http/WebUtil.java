@@ -12,10 +12,8 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
@@ -51,13 +49,13 @@ import org.apache.http.util.EntityUtils;
  */
 public class WebUtil {
 
-    static final int requestTimeOut = 10 * 1000;
-    static final int connectTimeOut = 10 * 1000;
-    static final int readTimeOut = 10 * 1000;
+	private static final int REQUEST_TIMEOUT = 10 * 1000;
+	private static final int CONNECT_TIMEOUT = 10 * 1000;
+	private static final int READ_TIMEOUT = 10 * 1000;
     
-    static final String HTTP = "http";
-    static final String HTTPS = "https";
-    static final String CONTENT_TYPE = "Content-Type";
+	public static final String HTTP = "http";
+	public static final String HTTPS = "https";
+	public static final String CONTENT_TYPE = "Content-Type";
     
     private static CloseableHttpClient httpClient = null;
     private final static Object syncLock = new Object();
@@ -73,9 +71,9 @@ public class WebUtil {
         // "ISO-8859-1,utf-8,gbk,gb2312;q=0.7,*;q=0.7");
         // 配置请求的超时设置
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(requestTimeOut)
-                .setConnectTimeout(connectTimeOut)
-                .setSocketTimeout(readTimeOut).build();
+                .setConnectionRequestTimeout(REQUEST_TIMEOUT)
+                .setConnectTimeout(CONNECT_TIMEOUT)
+                .setSocketTimeout(READ_TIMEOUT).build();
         httpRequestBase.setConfig(requestConfig);
     }
 

@@ -11,35 +11,46 @@ import java.util.Stack;
  */
 public class BigintConvert {
 
-	private static String keys = "QWERTYUIOPASDFGHJKLZXCVBNM";
-	private static char[] array = null;
-	private static int ONEMAX = 0;
-	private static final char ZERO = '0';
+	private String keys = "QWERTYUIOPASDFGHJKLZXCVBNM";
+	private char[] array = null;
+	private int ONEMAX = 0;
+	private final char ZERO = '0';
 	
-	static{
+	public BigintConvert(String keys) throws Exception {
+		this.keys = keys;
+		char[] seedKeys = keys.toCharArray();
+		StringBuilder seed = new StringBuilder();
+		for (int i = 0; i < seedKeys.length; i++) {
+			char s = seedKeys[i];
+			if(seed.indexOf(String.valueOf(s))==-1){
+				seed.append(s);
+			}
+		}
+		array = seed.toString().toCharArray();
+		ONEMAX = seed.length();
+		if(ONEMAX<2){
+			throw new Exception("keys length < 2");
+		}
+	}
+	
+	public BigintConvert(){
 		init();
 	}
 	
-	public static void init(){
+	private void init(){
 		array = keys.toCharArray();
 		ONEMAX = keys.length();
 	}
 	
-	public static void init(String key){
-		keys = key;
-		array = keys.toCharArray();
-		ONEMAX = keys.length();
-	}
-	
-	public static String encode(long number) {
+	public String encode(long number) {
 		return _10_to_bigint(BigInteger.valueOf(number));
 	}
 	
-	public static long decode(String number) {
+	public long decode(String number) {
 		return _bigint_to_10(number).longValue();
 	}
 
-	private static String _10_to_bigint(BigInteger number) {
+	private String _10_to_bigint(BigInteger number) {
 		BigInteger rest = number;
 		BigInteger max = BigInteger.valueOf(ONEMAX);
 		Stack<Character> stack = new Stack<Character>();
@@ -56,7 +67,7 @@ public class BigintConvert {
 
 	}
 	
-	private static BigInteger _bigint_to_10(String sixty_str) {
+	private BigInteger _bigint_to_10(String sixty_str) {
 		BigInteger multiple = BigInteger.valueOf(1);
 		BigInteger result = BigInteger.valueOf(0);
 		Character c;
@@ -69,7 +80,7 @@ public class BigintConvert {
 		return result;
 	}
 
-	private static int _bigint_value(Character c) {
+	private int _bigint_value(Character c) {
 		for (int i = 0; i < array.length; i++) {
 			if (c == array[i]) {
 				return i;
@@ -79,7 +90,7 @@ public class BigintConvert {
 	}
 	
 	//隔位对称反转 1234567890==>0284567391
-	public static String security(String code) {
+	public String security(String code) {
 		char[] temp = code.toCharArray();
 		int size = temp.length;
 		char[] result = new char[size];
@@ -96,7 +107,7 @@ public class BigintConvert {
 	}
 	
 	//隔位对称反转 1234567890==>9274563810最后一位是0保持原位置
-	public static BigInteger security(BigInteger code) {
+	public BigInteger security(BigInteger code) {
 		char[] temp = code.toString().toCharArray();
 		char[] _temp = null;
 		char[] result = null;
@@ -124,7 +135,13 @@ public class BigintConvert {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(_bigint_to_10("chenfan".toUpperCase()).toString());
-		System.out.println(encode(2147483646));
+		BigintConvert convert = null;
+		try {
+			convert = new BigintConvert("qaswsmn");
+			System.out.println(convert._bigint_to_10("mmmm").toString());
+			System.out.println(convert.encode(9999));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

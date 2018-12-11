@@ -145,4 +145,27 @@ public class FileUtil {
 			}
 		}
 	}
+	
+	public byte[] readByte(){
+        try {
+            FileInputStream in =new FileInputStream(this.file);
+            byte[] data=new byte[in.available()];
+            in.read(data);
+            in.close();
+            return data;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void writeByte(byte[] data){
+        try {
+            FileOutputStream outputStream  =new FileOutputStream(this.file);
+            outputStream.write(data);
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

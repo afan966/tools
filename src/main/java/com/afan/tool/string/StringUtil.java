@@ -66,6 +66,7 @@ public class StringUtil {
 		}
 		return true;
 	}
+	
 	public static boolean isBlank(String s) {
 		int strLen;
 		if (s == null || (strLen = s.length()) == 0) {
@@ -88,6 +89,29 @@ public class StringUtil {
 			return false;
 		}
 		return numberPattern.matcher(s).matches();
+	}
+	
+	/**
+	 * 判断是否全大于0
+	 * @param nums
+	 * @return
+	 */
+	public static boolean arePlus(int... nums){
+		for (int i : nums) {
+			if(i<=0){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public static boolean arePlus(long... nums){
+		for (long i : nums) {
+			if(i<=0){
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static boolean isTrue(int s) {
@@ -121,6 +145,17 @@ public class StringUtil {
 
 	public static String trim(String s) {
 		return s == null ? null : s.trim();
+	}
+	
+	public static String append(Object...ss) {
+		if(ss==null){
+			return null;
+		}
+		StringBuilder str = new StringBuilder();
+		for (Object s : ss) {
+			str.append(s);
+		}
+		return str.toString();
 	}
 
 	/**
@@ -302,7 +337,5 @@ public class StringUtil {
 	    }     
 	    return sb.toString();
 	}
-	
-	
 
 }

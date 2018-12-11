@@ -5,6 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.afan.tool.thread.PollingThread;
 
+/**
+ * 事件放入队列
+ * @author afan
+ *
+ * @param <T>
+ */
 public class EventGetThread<T extends Event> extends PollingThread {
 
 	private static final Logger logger = LoggerFactory.getLogger(EventGetThread.class);

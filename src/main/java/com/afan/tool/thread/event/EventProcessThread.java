@@ -12,6 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import com.afan.tool.thread.PollingThread;
 
+/**
+ * 队列消费事件
+ * @author afan
+ *
+ * @param <T>
+ */
 public class EventProcessThread<T extends Event> extends PollingThread {
 	private static final Logger logger = LoggerFactory.getLogger(EventProcessThread.class);
 	private int waitTimeout = 1000;

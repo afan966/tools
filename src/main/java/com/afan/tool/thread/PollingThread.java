@@ -29,18 +29,18 @@ public abstract class PollingThread {
 
 	public void start() {
 		synchronized (bundles) {
-		}
-		pools = new ExecutorService[poolsize];
-		for (int i = 0; i < poolsize; i++) {
-			final int threadNum = i;
-			pools[i] = Executors.newFixedThreadPool(1, new ThreadFactory() {
-				public Thread newThread(Runnable r) {
-					return new Thread(r, name + StringUtil.UNDERLINE + threadNum);
-				}
-			});
-
-			doWork(pools[i], i);
-			logger.debug("started {} >>>>>", name + StringUtil.UNDERLINE + threadNum);
+			pools = new ExecutorService[poolsize];
+			for (int i = 0; i < poolsize; i++) {
+				final int threadNum = i;
+				pools[i] = Executors.newFixedThreadPool(1, new ThreadFactory() {
+					public Thread newThread(Runnable r) {
+						return new Thread(r, name + StringUtil.UNDERLINE + threadNum);
+					}
+				});
+	
+				doWork(pools[i], i);
+				logger.debug("started {} >>>>>", name + StringUtil.UNDERLINE + threadNum);
+			}
 		}
 	}
 
